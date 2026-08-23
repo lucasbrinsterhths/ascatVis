@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<informationPackage xmlns="http://www.eumetsat.int/sip">
+    <dataSection>
+        <dataObject ID="OASWC12_20260822_202400_72273_M01.nc">
+            <fileType>Data</fileType>
+            <format>NetCDF</format>
+            <size>8571192</size>
+            <path>OASWC12_20260822_202400_72273_M01.nc</path>
+        </dataObject>
+    </dataSection>
+    <eopmetadataSection>
+        <path>EOPMetadata.xml</path>
+    </eopmetadataSection>
+</informationPackage>
