@@ -46,7 +46,7 @@ function nearestVector(lon, lat) {
 	const y = Math.floor((lat + 90) / CELL_SIZE);
 	let bestIndex = -1;
 	let bestDistance = Infinity;
-	for (let radius = 0; radius <= 2 && bestIndex < 0; radius += 1) {
+	for (let radius = 0; radius <= 2; radius += 1) {
 		for (let ix = x - radius; ix <= x + radius; ix += 1) {
 			for (let iy = y - radius; iy <= y + radius; iy += 1) {
 				const candidates = spatialIndex.get(`${ix},${iy}`) || [];
@@ -102,9 +102,11 @@ function drawCoastlines() {
 	ctx.beginPath();
 	for (const polygon of land.geometry.coordinates) {
 		for (const ring of polygon) {
-			ring.forEach(([lon, lat], index) => {
+				ring.forEach(([lon, lat], index) => {
 				const point = project(lon, lat);
-				index ? ctx.lineTo(point.x, point.y) : ctx.moveTo(point.x, point.y);
+					const previous = ring[index - 1];
+					const crossesDateLine = previous && Math.abs(lon - previous[0]) > 180;
+					index && !crossesDateLine ? ctx.lineTo(point.x, point.y) : ctx.moveTo(point.x, point.y);
 			});
 		}
 	}
@@ -141,7 +143,7 @@ function drawStatic() {
 		ctx.fill();
 	}
 	if (staticLayer) {
-		staticLayer.getContext('2d').drawImage(canvas, 0, 0);
+		staticLayer.getContext('2d').drawImage(canvas, 0, 0, width, height);
 	}
 }
 
@@ -241,7 +243,7 @@ async function load() {
 	try {
 		const [data, land] = await Promise.all([
 			fetch('data/latest.json').then(response => response.json()),
-			fetch('https://cdn.jsdelivr.net/npm/world-atlas@2/land-110m.json').then(response => response.json()),
+			fetch('https://cdn.jsdelivr.net/npm/world-atlas@2/land-50m.json').then(response => response.json()),
 		]);
 		points = data.points; coastlines = land; buildSpatialIndex(); makeParticles(); drawStatic();
 		statusEl.textContent = `${data.collection} · ${new Date(data.generated).toLocaleString()}`;
@@ -254,8 +256,3 @@ async function load() {
 window.addEventListener('resize', resize);
 resize();
 load();
-function resize(){const r=canvas.getBoundingClientRect(),d=devicePixelRatio||1;canvas.width=r.width*d;canvas.height=r.height*d;ctx.setTransform(d,0,0,d,0,0);draw()}function draw(){const w=canvas.clientWidth,h=canvas.clientHeight;ctx.clearRect(0,0,w,h);ctx.fillStyle='#d9edf0';ctx.fillRect(0,0,w,h);ctx.strokeStyle='#b8d4d8';ctx.lineWidth=1;for(let lon=Math.ceil(view.w/30)*30;lon<=view.e;lon+=30){const p=project(lon,0);ctx.beginPath();ctx.moveTo(p.x,0);ctx.lineTo(p.x,h);ctx.stroke()}for(let lat=Math.ceil(view.s/15)*15;lat<=view.n;lat+=15){const p=project(0,lat);ctx.beginPath();ctx.moveTo(0,p.y);ctx.lineTo(w,p.y);ctx.stroke()}ctx.fillStyle='#d6d4ca';ctx.strokeStyle='#a8aaa3';ctx.lineWidth=1;drawLand();for(const p of points){if(p.lon<view.w||p.lon>view.e||p.lat<view.s||p.lat>view.n)continue;const q=project(p.lon,p.lat),r=view.e-view.w<40?2.2:1.2;ctx.beginPath();ctx.arc(q.x,q.y,r,0,Math.PI*2);ctx.fillStyle=color(p.speed*1.94384);ctx.fill();}if(drag){const a=drag.start,b=drag.now;ctx.strokeStyle='#ed6a5a';ctx.setLineDash([6,4]);ctx.lineWidth=2;ctx.strokeRect(Math.min(a.x,b.x),Math.min(a.y,b.y),Math.abs(a.x-b.x),Math.abs(a.y-b.y));ctx.setLineDash([])}}function drawLand(){const land=[[-180,72],[-165,68],[-150,62],[-140,55],[-130,50],[-125,42],[-118,34],[-112,28],[-105,25],[-100,20],[-90,18],[-82,25],[-78,32],[-70,43],[-60,48],[-52,55],[-45,63],[-35,70],[-20,75],[0,80],[20,78],[35,70],[45,60],[55,55],[65,50],[75,45],[85,40],[95,35],[105,28],[115,20],[125,12],[135,5],[145,-5],[155,-15],[165,-25],[180,-30],[180,90],[-180,90]];ctx.beginPath();land.forEach((p,i)=>{const q=project(p[0],p[1]);i?ctx.lineTo(q.x,q.y):ctx.moveTo(q.x,q.y)});ctx.closePath();ctx.fill();ctx.stroke()}
-function nearest(x,y){let best=null,dist=Infinity;for(const p of points){const q=project(p.lon,p.lat),d=(q.x-x)**2+(q.y-y)**2;if(d<dist){best=p;dist=d}}return dist<100?best:null}function showPoint(p,x,y){if(!p){tooltip.hidden=true;return}tooltip.hidden=false;tooltip.style.left=`${x+18}px`;tooltip.style.top=`${y+10}px`;tooltip.innerHTML=`<b>${p.speed*1.94384|0} kt</b><br>${p.lon.toFixed(2)}°, ${p.lat.toFixed(2)}°<br>${new Date(p.time).toLocaleString()}`}
-canvas.onpointerdown=e=>{canvas.setPointerCapture(e.pointerId);drag={start:{x:e.offsetX,y:e.offsetY},now:{x:e.offsetX,y:e.offsetY}}};canvas.onpointermove=e=>{if(drag){drag.now={x:e.offsetX,y:e.offsetY};draw()}else showPoint(nearest(e.offsetX,e.offsetY),e.offsetX,e.offsetY)};canvas.onpointerup=e=>{if(!drag)return;const a=unproject(Math.min(drag.start.x,drag.now.x),Math.max(drag.start.y,drag.now.y)),b=unproject(Math.max(drag.start.x,drag.now.x),Math.min(drag.start.y,drag.now.y));if(Math.abs(a.lon-b.lon)>2&&Math.abs(a.lat-b.lat)>2){view={w:a.lon,e:b.lon,s:a.lat,n:b.lat};updateExtent()}drag=null;draw()};function updateExtent(){extentEl.textContent=`${view.w.toFixed(1)}° to ${view.e.toFixed(1)}° / ${view.s.toFixed(1)}° to ${view.n.toFixed(1)}°`;draw()}document.getElementById('zoomOutBtn').onclick=()=>{view={w:-180,e:180,s:-90,n:90};updateExtent()};document.getElementById('worldBtn').onclick=()=>{view={w:-180,e:180,s:-90,n:90};updateExtent()};document.getElementById('playBtn').onclick=()=>{playing=!playing;document.getElementById('playBtn').textContent=playing?'Pause drift':'Play drift';if(playing){timer=setInterval(()=>{for(const p of points){const a=p.direction*Math.PI/180;p.lon+=Math.sin(a)*.035;p.lat+=Math.cos(a)*.035}draw()},100)}else clearInterval(timer)};
-document.getElementById('gifBtn').onclick=async()=>{if(!points.length||typeof GIF==='undefined')return;const button=document.getElementById('gifBtn');button.disabled=true;button.textContent='Rendering...';const frames=[];const original=points.map(p=>({lon:p.lon,lat:p.lat}));for(let frame=0;frame<24;frame++){draw();frames.push(canvas.toDataURL('image/png'));for(const p of points){const a=p.direction*Math.PI/180;p.lon+=Math.sin(a)*.012;p.lat+=Math.cos(a)*.012}}points.forEach((p,i)=>{p.lon=original[i].lon;p.lat=original[i].lat});draw();const gif=new GIF({workers:2,quality:10,width:canvas.width,height:canvas.height,workerScript:'https://cdn.jsdelivr.net/npm/gif.js@0.2.0/dist/gif.worker.js'});for(const frame of frames){const image=new Image();image.src=frame;await new Promise(resolve=>{image.onload=resolve});gif.addFrame(image,{delay:100,copy:true})}gif.on('finished',blob=>{const link=document.createElement('a');link.href=URL.createObjectURL(blob);link.download='ascat-selection.gif';link.click();button.disabled=false;button.textContent='Generate GIF'});gif.render()};
-async function load(){try{const data=await fetch('data/latest.json').then(r=>r.json());points=data.points;statusEl.textContent=`${data.collection} · ${new Date(data.generated).toLocaleString()}`;countEl.textContent=`${points.length.toLocaleString()} observations`;freshnessEl.textContent=new Date(data.generated).toLocaleString();draw()}catch(e){statusEl.textContent='No data file published yet';console.error(e)}}window.addEventListener('resize',resize);resize();load();
