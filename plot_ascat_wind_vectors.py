@@ -164,7 +164,7 @@ def advance(frame):
     # Euler-style particle drift: at each step, choose the nearest vector in the field and move in
     # that direction for a short increment. This mimics dropping a ball into the flow and letting
     # it follow the local wind.
-    step_scale = 0.001
+    step_scale = 0.0001
     if len(field_lon) > 0:
         dx = field_lon[None, :] - positions_x[:, None]
         dy = field_lat[None, :] - positions_y[:, None]
