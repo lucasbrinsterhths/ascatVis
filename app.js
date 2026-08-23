@@ -238,18 +238,27 @@ document.getElementById('playBtn').onclick = () => {
 document.getElementById('gifBtn').onclick = async () => {
 	if (!particles.length || typeof GIF === 'undefined') return;
 	const button = document.getElementById('gifBtn'); button.disabled = true; button.textContent = 'Rendering...';
-	const frames = []; const original = particles.map(p => ({ lon: p.lon, lat: p.lat, speed: p.speed }));
-	for (let frame = 0; frame < 24; frame += 1) { advanceParticles(); frames.push(canvas.toDataURL('image/png')); }
-	particles.forEach((p, index) => Object.assign(p, original[index])); draw();
-	const gif = new GIF({ workers: 2, quality: 10, width: canvas.width, height: canvas.height, workerScript: 'https://cdn.jsdelivr.net/npm/gif.js@0.2.0/dist/gif.worker.js' });
-	for (const frame of frames) { const image = new Image(); image.src = frame; await new Promise(resolve => { image.onload = resolve; }); gif.addFrame(image, { delay: 100, copy: true }); }
-	gif.on('finished', blob => { const link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = 'ascat-selection.gif'; link.click(); button.disabled = false; button.textContent = 'Generate GIF'; });
-	gif.render();
+	try {
+		const workerSource = await fetch('https://cdn.jsdelivr.net/npm/gif.js@0.2.0/dist/gif.worker.js').then(response => response.text());
+		const workerUrl = URL.createObjectURL(new Blob([workerSource], { type: 'application/javascript' }));
+		const frames = []; const original = particles.map(p => ({ lon: p.lon, lat: p.lat, speed: p.speed }));
+		for (let frame = 0; frame < 24; frame += 1) { advanceParticles(); frames.push(canvas.toDataURL('image/png')); }
+		particles.forEach((p, index) => Object.assign(p, original[index])); draw();
+		const gif = new GIF({ workers: 2, quality: 10, width: canvas.width, height: canvas.height, workerScript: workerUrl });
+		for (const frame of frames) { const image = new Image(); image.src = frame; await new Promise(resolve => { image.onload = resolve; }); gif.addFrame(image, { delay: 100, copy: true }); }
+		gif.on('finished', blob => { const link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = 'ascat-selection.gif'; link.click(); URL.revokeObjectURL(workerUrl); button.disabled = false; button.textContent = 'Generate GIF'; });
+		gif.on('abort', () => { URL.revokeObjectURL(workerUrl); button.disabled = false; button.textContent = 'Generate GIF'; });
+		gif.render();
+	} catch (error) {
+		console.error('GIF generation failed', error);
+		button.disabled = false;
+		button.textContent = 'Generate GIF';
+	}
 };
 
 async function load() {
 	try {
-		const data = await fetch('data/latest.json').then(response => {
+		const data = await fetch(`data/latest.json?t=${Date.now()}`).then(response => {
 			if (!response.ok) throw new Error(`Data request failed: ${response.status}`);
 			return response.json();
 		});
