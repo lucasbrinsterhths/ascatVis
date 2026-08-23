@@ -97,17 +97,25 @@ function resize() {
 }
 
 function drawCoastlines() {
-	if (!coastlines || !window.topojson) return;
+	if (!coastlines || !window.topojson || !coastlines.objects || !coastlines.objects.land) return;
 	const land = topojson.feature(coastlines, coastlines.objects.land);
 	ctx.beginPath();
-	for (const polygon of land.geometry.coordinates) {
-		for (const ring of polygon) {
-				ring.forEach(([lon, lat], index) => {
+	const geometries = land.type === 'FeatureCollection'
+		? land.features.map(feature => feature.geometry)
+		: [land.geometry];
+	for (const geometry of geometries) {
+		const polygons = geometry.type === 'Polygon'
+			? [geometry.coordinates]
+			: geometry.coordinates;
+		for (const polygon of polygons) {
+			for (const ring of polygon) {
+			ring.forEach(([lon, lat], index) => {
 				const point = project(lon, lat);
 					const previous = ring[index - 1];
 					const crossesDateLine = previous && Math.abs(lon - previous[0]) > 180;
 					index && !crossesDateLine ? ctx.lineTo(point.x, point.y) : ctx.moveTo(point.x, point.y);
 			});
+			}
 		}
 	}
 	ctx.fillStyle = '#d6d4ca';
@@ -241,16 +249,28 @@ document.getElementById('gifBtn').onclick = async () => {
 
 async function load() {
 	try {
-		const [data, land] = await Promise.all([
-			fetch('data/latest.json').then(response => response.json()),
-			fetch('https://cdn.jsdelivr.net/npm/world-atlas@2/land-50m.json').then(response => response.json()),
-		]);
-		points = data.points; coastlines = land; buildSpatialIndex(); makeParticles(); drawStatic();
+		const data = await fetch('data/latest.json').then(response => {
+			if (!response.ok) throw new Error(`Data request failed: ${response.status}`);
+			return response.json();
+		});
+		points = data.points; buildSpatialIndex(); makeParticles(); drawStatic();
 		statusEl.textContent = `${data.collection} · ${new Date(data.generated).toLocaleString()}`;
 		countEl.textContent = `${points.length.toLocaleString()} observations`;
 		freshnessEl.textContent = new Date(data.generated).toLocaleString();
 		draw();
-	} catch (error) { statusEl.textContent = 'No data file published yet'; console.error(error); }
+	} catch (error) {
+		statusEl.textContent = 'No data file published yet';
+		console.error(error);
+	}
+	try {
+		const response = await fetch('https://cdn.jsdelivr.net/npm/world-atlas@2/land-50m.json');
+		if (!response.ok) throw new Error(`Coastline request failed: ${response.status}`);
+		coastlines = await response.json();
+		drawStatic();
+		draw();
+	} catch (error) {
+		console.warn('Coastline layer unavailable', error);
+	}
 }
 
 window.addEventListener('resize', resize);
