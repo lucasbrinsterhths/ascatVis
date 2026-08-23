@@ -1,0 +1,39 @@
+name: Update ASCAT data and deploy Pages
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '17 * * * *'
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install eumdac netCDF4 numpy
+      - run: python build_latest_ocean_dataset.py
+        env:
+          EUMDAC_CONSUMER_KEY: ${{ secrets.EUMDAC_CONSUMER_KEY }}
+          EUMDAC_CONSUMER_SECRET: ${{ secrets.EUMDAC_CONSUMER_SECRET }}
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: .
+  deploy:
+    needs: update
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

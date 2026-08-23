@@ -13,7 +13,7 @@ INPUT = r'c:\Users\lucas\OneDrive\HTHS\Random\ascatVis\OASWC12_20260822_202400_7
 OUTPUT = r'c:\Users\lucas\OneDrive\HTHS\Random\ascatVis\ascat_wind_vectors.png'
 FRAME_BOUNDS = (-180, -165, 30, 40)
 FRAME_EXTENT = (-180, -165, 30, 40)
-DATA_WINDOW = (-180, -165, 30, 40)
+DATA_WINDOW = (-182, -163, 28, 42)
 
 print(f'Using input file: {INPUT}')
 
@@ -164,7 +164,7 @@ def advance(frame):
     # Euler-style particle drift: at each step, choose the nearest vector in the field and move in
     # that direction for a short increment. This mimics dropping a ball into the flow and letting
     # it follow the local wind.
-    step_scale = 0.005
+    step_scale = 0.001
     if len(field_lon) > 0:
         dx = field_lon[None, :] - positions_x[:, None]
         dy = field_lat[None, :] - positions_y[:, None]
@@ -185,7 +185,7 @@ def advance(frame):
     scat.set_color(colors)
     return scat,
 
-anim = FuncAnimation(fig, advance, frames=60, interval=90, blit=True, repeat=True)
+anim = FuncAnimation(fig, advance, frames=180, interval=90, blit=True, repeat=True)
 anim.save(gif_path, writer='pillow', fps=12, dpi=150)
 print(f'Wrote static map to {OUTPUT}')
 print(f'Wrote animated GIF to {gif_path}')

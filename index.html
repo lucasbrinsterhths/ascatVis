@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ASCAT Ocean Wind Atlas</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="shell">
+    <header class="masthead">
+      <div><p class="kicker">EUMETSAT / OSI-104</p><h1>Ocean wind atlas</h1><p class="subhead">The freshest ASCAT observation available for each 0.25° ocean cell.</p></div>
+      <div class="status"><span class="pulse"></span><span id="status">Loading latest 24-hour field</span></div>
+    </header>
+    <section class="workspace">
+      <aside class="controls">
+        <div class="control-block"><label>View</label><div class="button-row"><button id="worldBtn" class="active">World</button><button id="zoomOutBtn">Zoom out</button></div></div>
+        <div class="control-block"><label>Animation</label><div class="button-row"><button id="playBtn">Play drift</button><button id="gifBtn">Generate GIF</button></div></div>
+        <div class="readout"><span>Selected extent</span><strong id="extent">Global</strong></div>
+        <div class="readout"><span>Freshest sample</span><strong id="freshness">--</strong></div>
+        <div class="legend"><div class="legend-title"><span>Wind speed</span><span>0–50 kt</span></div><div class="scale"></div><div class="legend-ticks"><span>0</span><span>25</span><span>50+</span></div></div>
+        <p class="hint">Drag a box over the map to zoom. Click a point to inspect its observation.</p>
+      </aside>
+      <section class="map-panel"><canvas id="map" aria-label="Global ASCAT ocean wind map"></canvas><div id="tooltip" class="tooltip" hidden></div><div class="map-footer"><span id="count">-- observations</span><span>Drag to select an area</span></div></section>
+    </section>
+    <footer>Data: EUMETSAT Data Store · <a href="https://www.eumetsat.int/ascat" target="_blank" rel="noreferrer">ASCAT</a> · Updated automatically</footer>
+  </main>
+  <script src="https://cdn.jsdelivr.net/npm/gif.js@0.2.0/dist/gif.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
