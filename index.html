@@ -5,6 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>ASCAT Ocean Wind Atlas</title>
   <link rel="stylesheet" href="styles.css">
+  <style>
+    .scale { background: linear-gradient(90deg, #FFFFFF 0%, #88D1F6 8.33%, #46B5EC 16.66%, #1C90CA 25%, #30C016 33.33%, #74EC5F 41.66%, #DCD941 50%, #EC8346 58.33%, #D22D35 66.66%, #F26EF5 75%, #893BC4 83.33%, #9178ED 91.66%, #B5B0F7 100%); }
+  </style>
 </head>
 <body>
   <main class="shell">
@@ -18,7 +21,7 @@
         <div class="control-block"><label>Animation</label><div class="button-row"><button id="playBtn">Play drift</button><button id="gifBtn">Generate GIF</button></div></div>
         <div class="readout"><span>Selected extent</span><strong id="extent">Global</strong></div>
         <div class="readout"><span>Freshest sample</span><strong id="freshness">--</strong></div>
-        <div class="legend"><div class="legend-title"><span>Wind speed</span><span>0–50 kt</span></div><div class="scale"></div><div class="legend-ticks"><span>0</span><span>25</span><span>50+</span></div></div>
+        <div class="legend"><div class="legend-title"><span>Wind speed</span><span>0–60+ kt</span></div><div class="scale"></div><div class="legend-ticks"><span>0</span><span>30</span><span>60+</span></div></div>
         <p class="hint">Drag a box over the map to zoom. Click a point to inspect its observation.</p>
       </aside>
       <section class="map-panel"><canvas id="map" aria-label="Global ASCAT ocean wind map"></canvas><div id="tooltip" class="tooltip" hidden></div><div class="map-footer"><span id="count">-- observations</span><span>Drag to select an area</span></div></section>

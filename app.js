@@ -88,13 +88,15 @@ function makeParticles() {
 }
 
 function color(speed) {
-	const stops = ['#173f5f', '#20639b', '#3caea3', '#f6d55c', '#ed553b'];
-	const t = Math.max(0, Math.min(1, speed / 50)) * (stops.length - 1);
-	const i = Math.min(stops.length - 2, Math.floor(t));
-	const f = t - i;
-	const a = parseInt(stops[i].slice(1), 16);
-	const b = parseInt(stops[i + 1].slice(1), 16);
-	return `rgb(${((a >> 16) + ((b >> 16) - (a >> 16)) * f) | 0},${(((a >> 8 & 255) + ((b >> 8 & 255) - (a >> 8 & 255)) * f)) | 0},${(((a & 255) + ((b & 255) - (a & 255)) * f)) | 0})`;
+	const bands = [
+		[5, '#FFFFFF'], [10, '#88D1F6'], [15, '#46B5EC'], [20, '#1C90CA'],
+		[25, '#30C016'], [30, '#74EC5F'], [34, '#DCD941'], [40, '#EC8346'],
+		[45, '#D22D35'], [50, '#F26EF5'], [55, '#893BC4'], [60, '#9178ED'],
+	];
+	for (const [limit, bandColor] of bands) {
+		if (speed < limit) return bandColor;
+	}
+	return '#B5B0F7';
 }
 
 function resize() {
